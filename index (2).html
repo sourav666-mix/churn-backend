@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChurnSense — Churn Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#13131c;--surface2:#1c1c28;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.13);--accent:#6c63ff;--green:#00e5a0;--amber:#ffb347;--red:#ff5370;--text:#f0f0f8;--muted:rgba(240,240,248,0.5);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(108,99,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;}
+.orb1{width:500px;height:500px;background:rgba(108,99,255,0.1);top:-150px;right:-150px;}
+.orb2{width:350px;height:350px;background:rgba(0,229,160,0.06);bottom:-100px;left:-100px;}
+.wrap{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:0 20px;}
+nav{padding:22px 0;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;}
+.logo span{color:var(--accent);}
+.nav-tag{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);color:var(--muted);}
+.hero{padding:56px 0 40px;text-align:center;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:500;color:var(--accent);margin-bottom:22px;letter-spacing:.05em;}
+.dot-pulse{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(34px,6vw,58px);font-weight:800;line-height:1.08;letter-spacing:-1.5px;margin-bottom:16px;}
+h1 em{font-style:normal;color:var(--accent);}
+.sub{font-size:15px;color:var(--muted);max-width:440px;margin:0 auto;line-height:1.7;}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:32px;margin:32px 0;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.sec-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:580px){.g3{grid-template-columns:1fr 1fr;}}
+@media(max-width:380px){.g3{grid-template-columns:1fr;}}
+.mb{margin-bottom:26px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+label{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.03em;}
+select,input[type=number]{background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+select:focus,input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.1);}
+select option{background:var(--surface2);}
+.tg{display:flex;gap:6px;}
+.tb{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;}
+.tb.on{background:rgba(108,99,255,0.14);border-color:rgba(108,99,255,0.5);color:var(--text);}
+.tb:hover:not(.on){background:var(--surface2);color:var(--text);}
+.btn{width:100%;padding:15px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,0.3);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+.result{display:none;border-radius:18px;padding:28px;margin-bottom:32px;border:1px solid var(--border2);animation:up .35s ease;}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.result.low{background:rgba(0,229,160,0.05);border-color:rgba(0,229,160,0.18);}
+.result.mid{background:rgba(255,179,71,0.05);border-color:rgba(255,179,71,0.18);}
+.result.high{background:rgba(255,83,112,0.05);border-color:rgba(255,83,112,0.18);}
+.res-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.verdict{font-family:'Syne',sans-serif;font-size:clamp(20px,4vw,30px);font-weight:800;}
+.verdict.safe{color:var(--green);}
+.verdict.risk{color:var(--red);}
+.rpill{font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;font-family:'Syne',sans-serif;letter-spacing:.04em;}
+.rpill.low{background:rgba(0,229,160,0.12);color:var(--green);}
+.rpill.mid{background:rgba(255,179,71,0.12);color:var(--amber);}
+.rpill.high{background:rgba(255,83,112,0.12);color:var(--red);}
+.plabel{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:7px;}
+.plabel strong{color:var(--text);font-size:18px;font-family:'Syne',sans-serif;font-weight:700;}
+.pbar{height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:18px;}
+.pfill{height:100%;border-radius:4px;width:0;transition:width 1s cubic-bezier(.25,.46,.45,.94);}
+.pfill.low{background:var(--green);}
+.pfill.mid{background:var(--amber);}
+.pfill.high{background:var(--red);}
+.rmsg{font-size:13px;color:var(--muted);line-height:1.7;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;}
+@media(max-width:480px){.stats{grid-template-columns:1fr 1fr;}}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;}
+.sn{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:3px;}
+.sn.p{color:var(--accent)}.sn.g{color:var(--green)}.sn.r{color:#ff6584;}
+.sl{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;}
+.wake-box{background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--accent);margin-top:12px;display:none;text-align:center;}
+.err-box{background:rgba(255,83,112,0.08);border:1px solid rgba(255,83,112,0.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--red);margin-top:12px;display:none;}
+footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;font-size:12px;color:var(--muted);margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="wrap">
+  <nav>
+    <div class="logo">Churn<span>Sense</span></div>
+    <div class="nav-tag">XGBoost · Telco Dataset</div>
+  </nav>
+  <div class="hero">
+    <div class="badge"><span class="dot-pulse"></span>ML-Powered Prediction</div>
+    <h1>Will this customer<br/><em>churn?</em></h1>
+    <p class="sub">Enter customer details and get an instant prediction powered by your trained XGBoost model.</p>
+  </div>
+  <div class="stats">
+    <div class="sc"><div class="sn p">XGBoost</div><div class="sl">Algorithm</div></div>
+    <div class="sc"><div class="sn g">19</div><div class="sl">Features</div></div>
+    <div class="sc"><div class="sn r">Telco</div><div class="sl">Dataset</div></div>
+  </div>
+  <div class="card">
+    <div class="mb">
+      <div class="sec-title">Customer profile</div>
+      <div class="g3">
+        <div class="field"><label>Gender</label><div class="tg"><button class="tb on" onclick="tog('gender',0,this)">Female</button><button class="tb" onclick="tog('gender',1,this)">Male</button></div><input type="hidden" id="gender" value="0"/></div>
+        <div class="field"><label>Senior Citizen</label><div class="tg"><button class="tb on" onclick="tog('senior',0,this)">No</button><button class="tb" onclick="tog('senior',1,this)">Yes</button></div><input type="hidden" id="senior" value="0"/></div>
+        <div class="field"><label>Tenure (months)</label><input type="number" id="tenure" value="12" min="0" max="72"/></div>
+        <div class="field"><label>Partner</label><div class="tg"><button class="tb on" onclick="tog('partner',0,this)">No</button><button class="tb" onclick="tog('partner',1,this)">Yes</button></div><input type="hidden" id="partner" value="0"/></div>
+        <div class="field"><label>Dependents</label><div class="tg"><button class="tb on" onclick="tog('dependents',0,this)">No</button><button class="tb" onclick="tog('dependents',1,this)">Yes</button></div><input type="hidden" id="dependents" value="0"/></div>
+      </div>
+    </div>
+    <div class="mb">
+      <div class="sec-title">Services</div>
+      <div class="g3">
+        <div class="field"><label>Phone Service</label><div class="tg"><button class="tb on" onclick="tog('phone',0,this)">No</button><button class="tb" onclick="tog('phone',1,this)">Yes</button></div><input type="hidden" id="phone" value="0"/></div>
+        <div class="field"><label>Multiple Lines</label><div class="tg"><button class="tb on" onclick="tog('multilines',0,this)">No</button><button class="tb" onclick="tog('multilines',1,this)">Yes</button></div><input type="hidden" id="multilines" value="0"/></div>
+        <div class="field"><label>Internet Service</label><select id="internet"><option value="0">No Internet</option><option value="1">DSL</option><option value="2" selected>Fiber Optic</option></select></div>
+        <div class="field"><label>Online Security</label><div class="tg"><button class="tb on" onclick="tog('security',0,this)">No</button><button class="tb" onclick="tog('security',1,this)">Yes</button></div><input type="hidden" id="security" value="0"/></div>
+        <div class="field"><label>Online Backup</label><div class="tg"><button class="tb on" onclick="tog('backup',0,this)">No</button><button class="tb" onclick="tog('backup',1,this)">Yes</button></div><input type="hidden" id="backup" value="0"/></div>
+        <div class="field"><label>Device Protection</label><div class="tg"><button class="tb on" onclick="tog('device',0,this)">No</button><button class="tb" onclick="tog('device',1,this)">Yes</button></div><input type="hidden" id="device" value="0"/></div>
+        <div class="field"><label>Tech Support</label><div class="tg"><button class="tb on" onclick="tog('techsup',0,this)">No</button><button class="tb" onclick="tog('techsup',1,this)">Yes</button></div><input type="hidden" id="techsup" value="0"/></div>
+        <div class="field"><label>Streaming TV</label><div class="tg"><button class="tb on" onclick="tog('tv',0,this)">No</button><button class="tb" onclick="tog('tv',1,this)">Yes</button></div><input type="hidden" id="tv" value="0"/></div>
+        <div class="field"><label>Streaming Movies</label><div class="tg"><button class="tb on" onclick="tog('movies',0,this)">No</button><button class="tb" onclick="tog('movies',1,this)">Yes</button></div><input type="hidden" id="movies" value="0"/></div>
+      </div>
+    </div>
+    <div class="mb">
+      <div class="sec-title">Billing & Contract</div>
+      <div class="g3">
+        <div class="field"><label>Contract</label><select id="contract"><option value="0" selected>Month-to-month</option><option value="1">One year</option><option value="2">Two year</option></select></div>
+        <div class="field"><label>Payment Method</label><select id="payment"><option value="0">Auto (Bank/Card)</option><option value="1">Mailed Check</option><option value="2" selected>Electronic Check</option></select></div>
+        <div class="field"><label>Paperless Billing</label><div class="tg"><button class="tb on" onclick="tog('paperless',0,this)">No</button><button class="tb" onclick="tog('paperless',1,this)">Yes</button></div><input type="hidden" id="paperless" value="0"/></div>
+        <div class="field"><label>Monthly Charges ($)</label><input type="number" id="monthly" value="65" step="0.01"/></div>
+        <div class="field"><label>Total Charges ($)</label><input type="number" id="total" value="780" step="0.01"/></div>
+      </div>
+    </div>
+    <button class="btn" id="btn" onclick="predict()">Predict Churn</button>
+    <div class="wake-box" id="wakebox">Backend is waking up (Render free tier). Wait 30 seconds then click Predict again.</div>
+    <div class="err-box" id="errbox"></div>
+  </div>
+  <div class="result" id="result">
+    <div class="res-top">
+      <div class="verdict" id="verdict"></div>
+      <div class="rpill" id="rpill"></div>
+    </div>
+    <div class="plabel"><span>Churn Probability</span><strong id="probnum"></strong></div>
+    <div class="pbar"><div class="pfill" id="pfill"></div></div>
+    <div class="rmsg" id="rmsg"></div>
+  </div>
+  <footer>Built with XGBoost · FastAPI · Render · Vercel</footer>
+</div>
+<script>
+const API_URL = "https://churn-backend-gips.onrender.com";
+
+function tog(id,val,btn){
+  document.getElementById(id).value=val;
+  btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+async function predict(){
+  const btn=document.getElementById('btn');
+  const wake=document.getElementById('wakebox');
+  const err=document.getElementById('errbox');
+  wake.style.display='none';
+  err.style.display='none';
+  btn.disabled=true;
+  btn.textContent='Predicting...';
+
+  const payload={
+    gender:          parseInt(document.getElementById('gender').value),
+    SeniorCitizen:   parseInt(document.getElementById('senior').value),
+    Partner:         parseInt(document.getElementById('partner').value),
+    Dependents:      parseInt(document.getElementById('dependents').value),
+    tenure:          parseInt(document.getElementById('tenure').value),
+    PhoneService:    parseInt(document.getElementById('phone').value),
+    MultipleLines:   parseInt(document.getElementById('multilines').value),
+    InternetService: parseInt(document.getElementById('internet').value),
+    OnlineSecurity:  parseInt(document.getElementById('security').value),
+    OnlineBackup:    parseInt(document.getElementById('backup').value),
+    DeviceProtection:parseInt(document.getElementById('device').value),
+    TechSupport:     parseInt(document.getElementById('techsup').value),
+    StreamingTV:     parseInt(document.getElementById('tv').value),
+    StreamingMovies: parseInt(document.getElementById('movies').value),
+    Contract:        parseInt(document.getElementById('contract').value),
+    PaperlessBilling:parseInt(document.getElementById('paperless').value),
+    PaymentMethod:   parseInt(document.getElementById('payment').value),
+    MonthlyCharges:  parseFloat(document.getElementById('monthly').value),
+    TotalCharges:    parseFloat(document.getElementById('total').value),
+  };
+
+  try {
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),60000);
+    const res=await fetch(`${API_URL}/predict`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      signal:ctrl.signal
+    });
+    clearTimeout(tid);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    showResult(data);
+  } catch(e){
+    if(e.name==='AbortError'){
+      wake.style.display='block';
+    } else {
+      err.style.display='block';
+      err.textContent='Error: '+e.message+'. Open https://churn-backend-gips.onrender.com in browser to wake the server, then try again.';
+    }
+  } finally {
+    btn.disabled=false;
+    btn.textContent='Predict Churn';
+  }
+}
+
+function showResult(data){
+  const res=document.getElementById('result');
+  const risk=data.risk.toLowerCase()==='medium'?'mid':data.risk.toLowerCase();
+  res.className=`result ${risk}`;
+  res.style.display='block';
+  const v=document.getElementById('verdict');
+  v.textContent=data.churn===1?'Likely to Churn':'Not Likely to Churn';
+  v.className=`verdict ${data.churn===1?'risk':'safe'}`;
+  const rp=document.getElementById('rpill');
+  rp.textContent=`${data.risk} Risk`;
+  rp.className=`rpill ${risk}`;
+  document.getElementById('probnum').textContent=`${data.probability}%`;
+  const pf=document.getElementById('pfill');
+  pf.className=`pfill ${risk}`;
+  pf.style.width='0%';
+  setTimeout(()=>{pf.style.width=data.probability+'%';},80);
+  const msgs={
+    low:'This customer shows strong loyalty signals. Long tenure, stable contract, and automatic payment reduce churn likelihood.',
+    mid:'Mixed signals detected. A proactive retention offer could reduce churn risk.',
+    high:'High churn risk! This customer is likely to leave soon. Immediate retention action recommended.'
+  };
+  document.getElementById('rmsg').textContent=msgs[risk]||msgs.mid;
+  res.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
+</body>
+</html>
